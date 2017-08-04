@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# Script that runs the experiment. 
+# Usage : ./runscript e | m | <blank> 
+# each option runs an implementation of paxos
+
+
+if [ $# -lt 4 ]; then
+	echo "Usage ./runscript [e|m|v] [minthreads] [maxthreads] [thread increment]"
+    exit 1
+fi;
+
+if [ "$1" = "e" ];then
+	PAXOS="e-paxos"
+elif [ "$1" = "m" ]; then
+	PAXOS="mencius-paxos"
+elif [ "$1" = "v" ]; then
+	PAXOS="vanilla-paxos"
+else
+    echo "Usage ./runscript [e|m|v] [number of threads]"
+    exit 1
+fi;
+
+TMIN=$2
+TMAX=$3
+TSTEP=$4
+
+EPAXOSPATH=~/epaxos
+cd $EPAXOSPATH/run
+
+[[ -f run_num ]] || echo 0 > run_num
+n=$(< run_num)
+n=$(( n + 1 )) 
+echo $n > run_num
+
+temp1=$(mktemp)
+#PAXOS="vanilla-paxos"
+#PAXOS="e-paxos"
+#PAXOS="mencius-paxos"
+#PAXOS="generalized-paxos"
+#NCLIENTS="1"
+DATE="`date '+%Y-%m-%d-%H-%M' `"
+WRITE="100%"
+#FILENAME="$PAXOS-$NCLIENTS-clients-$WRITE-writes-$DATE"
+FILEPREFIX="$PAXOS"
+DIRNAME="run$n"
+
+	  
+START=$(date +%s.%N)
+
+
+mkdir -p $DIRNAME && cd $DIRNAME
+
+for (( T=$TMIN; T<=$TMAX; T=T+$TSTEP ))
+do
+#	while(true); do
+#		echo "Have you restarted the Master/Replicas?"
+#		read response
+#		if (( "$response" == "y")); then
+#			break
+#		else
+#			echo "Go ahead, i'll wait."
+#		fi
+#	done
+	
+	echo "Killing master/replicas.."
+	/bin/bash $EPAXOSPATH/run/killall
+	sleep 2
+	
+	echo "Starting master/replicas.."
+	if [ "$1" = "e" ];then
+		/bin/bash $EPAXOSPATH/run/startall -$1 #epaxos 
+	elif [ "$1" = "m" ];then 
+		/bin/bash $EPAXOSPATH/run/startall -$1 #mensius paxos
+	else
+		/bin/bash $EPAXOSPATH/run/startall  # classic paxos
+	fi
+	
+	sleep 2
+
+	while(true);
+	do
+		FILENAME="$FILEPREFIX-$T-threads"
+		#FILENAME="$FILEPREFIX-$T-batchsize"
+		echo "PAXOS=$PAXOS, NCLIENTS=$T, WRITES=$WRITE" >> $FILENAME
+		#$EPAXOSPATH/bin/conclient -batch $T -p 64 -T 1 2>&1 | tee -a $FILENAME &
+		$EPAXOSPATH/bin/conclient -batch 100 -p 64 -T $T 2>&1 | tee -a $FILENAME &
+		#$EPAXOSPATH/bin/clientlat -q 100000 -p 64 -T $T 2>&1 | tee -a $FILENAME &
+		last_pid=$!
+		sleep 20 
+		#ps -ef | grep -v grep | bin/conclient > $temp1
+		#	while read line; do
+		#		IFS=' '
+		#		set $line
+		#		kill -9 $2
+		#	done < $temp1
+		kill -KILL $last_pid
+		break
+	done
+done
+
+END=$(date +%s.%N)
+DIFF=$(echo "$END - $START" | bc) 
+echo "Script runtime: $DIFF seconds"  2>&1 | tee -a $FILENAME
+
+

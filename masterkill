@@ -1,0 +1,8 @@
+#!/bin/bash
+
+clients=$1
+for (( i=1; i<=$clients; i++ ))
+do
+	ssh -i ~/macbook.pem.txt client$i "pid=\$(ps aux | grep 'runscript' | awk '{print \$2}' | head -1); echo \$pid |xargs kill" 
+	ssh -i ~/macbook.pem.txt client$i "pid=\$(ps aux | grep 'conclient' | awk '{print \$2}' | head -1); echo \$pid |xargs kill" 
+done

@@ -1,0 +1,67 @@
+#!/bin/bash
+
+
+if [ $# -lt 5 ]; then
+    echo "Usage ./runscript [e|m|v] [MIN_THREAD] [MAX_THREADS] [THREAD_STEP] [num client machines]"
+    exit 1
+fi;
+
+if [ "$1" = "e" ];then
+    PAXOS="e-paxos"
+elif [ "$1" = "m" ]; then
+    PAXOS="mencius-paxos"
+elif [ "$1" = "v" ]; then
+    PAXOS="vanilla-paxos"
+else
+    echo "Usage ./runscript [e|m|v] [MIN_THREAD] [MAX_THREADS] [THREAD_STEP] [num client machines]"
+    exit 1
+fi;
+
+TMIN=$2
+TMAX=$3
+TSTEP=$4
+CLIENTS=$5
+
+echo "Cleaning previous results and run tests"
+echo "Initializing scripts on $CLIENTS machines"
+
+for (( i=1; i<=$CLIENTS; i++ )) 
+
+do
+
+	#clean previous run directories
+	ssh -i ~/macbook.pem.txt client$i "bash ~/epaxos/run/clean"
+	#run tests on all clients
+	ssh -i ~/macbook.pem.txt client$i "cd ~/epaxos/run/ && ./runscript $1 $TMIN $TMAX $TSTEP" &
+done
+
+for (( i=1; i<=$CLIENTS; i++ )) 
+do
+	#run parse_out on all clients (dump output)
+	ssh -i ~/macbook.pem.txt client$i "cd ~/epaxos/run/ && ./parse_out $1 $TMIN $TMAX $TSTEP run1 " &
+done
+
+
+#generate data - classic paxos
+echo "Generating data...."
+
+if [ $1 == "v" ]; then
+	cd ~/epaxos/results/classic
+	#bash ~/epaxos/results/classic/dometa
+	#bash ~/epaxos/results/classic/get_out_files
+	#`bash ~/epaxos/results/classic/combine_clients.py $1 meta` 
+elif [ $1 == "e" ]; then
+	cd ~/epaxos/results/epaxos
+	#bash ~/epaxos/results/epaxos/dometa
+	#bash ~/epaxos/results/epaxos/get_out_files
+	#`bash ~/epaxos/results/epaxos/combine_clients.py $1 meta`
+elif [ $1 == "m" ]; then
+	cd ~/epaxos/results/mencius
+	#bash ~/epaxos/results/mencius/dometa
+	#bash ~/epaxos/results/mencius/get_out_files
+	#`bash ~/epaxos/results/mencius/combine_clients.py $1 meta`
+fi;
+
+bash dometa
+./get_out_files $CLIENTS
+./combine_clients.py "$1" "meta"

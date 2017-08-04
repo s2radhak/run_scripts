@@ -1,0 +1,6 @@
+#!/bin/bash
+
+n=$(< run_num)
+rm -rf run$n
+n=$(( n - 1 ))
+echo $n > run_num

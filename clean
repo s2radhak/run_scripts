@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd ~/epaxos/run
+if [ $? -eq 0 ]; then
+	echo OK
+	rm -rf run[0-9]*
+	rm run_num
+else
+	echo FAIL
+	exit 1
+fi
+

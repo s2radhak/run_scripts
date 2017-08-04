@@ -1,0 +1,53 @@
+#!/bin/bash
+# super hacky script to parse out run numbers
+
+# argument to file is one of the following : 
+# egalit_paxos  
+# mensius_paxos 
+# vanilla_paxos
+
+c=2000
+loop=50
+
+if [ $# -eq 0 ]; then
+	echo "Usage ./parse [e|m|v]"
+	exit 1
+fi;
+
+if [ "$1" = "e" ];then
+	type="egalit_paxos"
+elif [ "$1" = "m" ]; then
+	type="mensius_paxos"
+elif [ "$1" = "v" ]; then
+	type="vanilla_paxos"
+else
+	echo "Usage ./parse [e|m|v]"
+	exit 1
+fi;
+
+#clean existing output files
+SEARCHPATH=~/epaxos/run/successful/$type
+OUTPUT="$type-out.txt"
+rm $OUTPUT 
+temp1=$(mktemp)
+temp2=$(mktemp)
+
+#isolate latency and throughput numbers
+find $SEARCHPATH -name "*" -exec grep -ie "round" -ie "succes" {} \;  | grep -ie "round" -ie "succes" > $temp1
+while read line1; do read line2; echo "$line1 $line2" | tee -a $temp2 ; done < $temp1
+
+# parse the file to retain numbers only
+while read line1; do
+	IFS=' '
+	set $line1
+	echo "$3 $5" | tee -a $OUTPUT 
+done < $temp2
+
+#remove units
+sed -i s/ms//g $OUTPUT 
+sed -i s/s//g $OUTPUT 
+
+#insert count for average
+count=$(echo `grep -c -w "$c" $OUTPUT`)
+echo $count
+sed -i "1s/^/$count\n/" "$OUTPUT"

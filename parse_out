@@ -1,0 +1,67 @@
+#!/usr/bin/python
+
+#Warning: this script is highly coupled with the format of the output generated
+#by ./runscript.
+
+import sys
+import statistics
+from subprocess import call
+
+if(len(sys.argv) != 6):
+    print "Usage : ./parse [e|v|m] [minthread] [maxthread] [threadstep] [run#]"
+    sys.exit()
+
+#if(len(sys.argv) != 2):
+#    print "Usage : ./parse [e|v|m]"
+#    sys.exit()
+
+TMIN=int(sys.argv[2])
+TMAX=int(sys.argv[3])
+TSTEP=int(sys.argv[4])
+runfolder=str(sys.argv[5])
+
+fileprefix=""
+
+if(str(sys.argv[1]) == "e"):
+    fileprefix = "e"
+elif(str(sys.argv[1]) == "m"):
+    fileprefix = "mencius"
+elif(str(sys.argv[1]) == "v"):
+    fileprefix = "vanilla"
+
+
+lat_marker="ms"
+tput_marker="Success"
+final_data=[]
+
+for T in range(TMIN, TMAX,TSTEP):
+    filename=runfolder+"/"+fileprefix+"-paxos-"+str(T)+"-threads"
+#for T in range(1000, numthreads, 100):
+#    filename=runfolder+"/"+fileprefix+"-paxos-"+str(T)+"-batchsize"
+    with open(filename) as infile:
+        tput = []
+        lat = []
+        for line in infile:
+            if(lat_marker in line):
+                lat.append(float(line.split(' ')[-2][:-2])) #strip strings and remove "ms"
+#                lat.append(float(line.split(' ')[-2])*1000) #strip strings and remove "ms"
+            elif(tput_marker in line):
+                tput.append(int(line.split(' ')[-1])) #strip strings and retain tput value
+#    print len(tput)
+#    print len(lat)
+    if(tput[5:-5]):
+        avg_tput=int(statistics.mean(tput[5:-5]))
+        avg_lat=statistics.median(lat[1000:-1000])
+        final_data.append([avg_lat, avg_tput])
+
+
+for line in final_data:
+    print line
+
+outfile=fileprefix+"-paxos-final-out.txt"
+with open(outfile, 'w') as f_out:
+    for x in final_data:
+        f_out.write("%s %s\n" % (x[0], int(x[1])))
+
+
+

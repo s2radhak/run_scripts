@@ -1,0 +1,8 @@
+#!/bin/bash
+PEMPATH=~/epaxos/run
+
+ssh -i "$PEMPATH/macbook.pem.txt" 172.31.34.114 "pid=\$(ps aux | grep -v grep | grep 'bin/master' | awk '{print \$2}' | head -1); echo \$pid |xargs kill"  
+ssh -i "$PEMPATH/macbook.pem.txt" 172.31.35.170 "pid=\$(ps aux | grep -v grep | grep 'bin/server' | awk '{print \$2}' | head -1); echo \$pid |xargs kill"  
+ssh -i "$PEMPATH/macbook.pem.txt" 172.31.36.122 "pid=\$(ps aux | grep -v grep | grep 'bin/server' | awk '{print \$2}' | head -1); echo \$pid |xargs kill" 
+ssh -i "$PEMPATH/macbook.pem.txt" 172.31.34.178 "pid=\$(ps aux | grep -v grep | grep 'bin/server' | awk '{print \$2}' | head -1); echo \$pid |xargs kill" 
+

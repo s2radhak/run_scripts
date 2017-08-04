@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+if [ $# -ne 1 ]; then 
+	echo "Usage ./copyscript [number of clients]"
+	exit 1
+fi
+
+
+clients=$1
+for (( i=2; i <=$clients; i=i+1 ))
+do
+	scp -i ~/macbook.pem.txt runscript client$i:~/epaxos/run/.
+#	scp -i ~/macbook.pem.txt parse_out client$i:~/epaxos/run/.
+#	scp -i ~/macbook.pem.txt killall client$i:~/epaxos/run/.
+#	scp -i ~/macbook.pem.txt startall client$i:~/epaxos/run/.
+done
+

@@ -1,0 +1,11 @@
+Instructions to run experiments and get data for gnuplot:
+
+1. run ./runscript with the necessary arguemnts. First argument dictates the type of paxos to be run, second argument is the number of client threads.
+
+2. the output will be generated in folders named "run#" incrementing in number with each run.
+
+3. run ./parse_out - first argument is the paxos variant, second is the name of the folder you want to mine data from. NB: Make sure you enter the right paxos variant in the argument, corresponding to which variant is in the run folder you choose. This is easy to verify: do an ls on the run folder you wish to mine. 
+
+4. ./parse_out dumps latency and throughput data into a file. SCP this file over to your machine, run gnuplot on it.
+
+5. to remove previous outputs, run ./clean 
